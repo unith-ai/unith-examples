@@ -9,6 +9,18 @@ export function UnithChat() {
         orgId: import.meta.env.VITE_ORG_ID,
         headId: import.meta.env.VITE_HEAD_ID,
         apiKey: import.meta.env.VITE_API_KEY,
+        microphoneProvider: 'eleven_labs',
+        microphoneEvents: {
+            onMicrophoneError(prop) {
+                console.log(`Microphone error: ${prop.message}`);
+            },
+            onMicrophoneSpeechRecognitionResult(prop) {
+                conversation?.sendMessage(prop.transcript);
+            },
+            onMicrophoneStatusChange(prop) {
+                console.log('Microphone status changed:', prop.status);
+            },
+        }
     });
 
 
