@@ -12,6 +12,10 @@ export function UnithChat() {
         orgId: import.meta.env.VITE_ORG_ID,
         headId: import.meta.env.VITE_HEAD_ID,
         apiKey: import.meta.env.VITE_API_KEY,
+        language: 'en-US',
+        mode: 'default',
+        username: 'React User',
+        allowWakeLock: true,
     });
 
     useEffect(() => {
@@ -22,13 +26,12 @@ export function UnithChat() {
     useEffect(() => {
         if (videoRef.current && conversationRef.current) {
             conversationRef.current.startDigitalHuman(videoRef.current, {
-                microphoneProvider: 'eleven_labs',
+                microphoneProvider: 'azure',
                 microphoneEvents: {
                     onMicrophoneError(prop) {
                         console.log(`Microphone error: ${prop.message}`);
                     },
                     onMicrophoneSpeechRecognitionResult(prop) {
-                        console.log('Speech recognition result:', prop.transcript);
                         conversationRef.current?.sendMessage(prop.transcript);
                     },
                     onMicrophoneStatusChange(prop) {
@@ -120,16 +123,15 @@ export function UnithChat() {
                                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
                                             {conversation.mode}
                                         </span>
-                                        {isMicInitialized && (
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${micStatus === 'ON'
-                                                ? 'bg-green-500/20 text-green-300 border-green-500/30'
-                                                : micStatus === 'PROCESSING'
-                                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                                    : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
-                                                }`}>
-                                                🎤 {micStatus}
-                                            </span>
-                                        )}
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${micStatus === 'ON'
+                                            ? 'bg-green-500/20 text-green-300 border-green-500/30'
+                                            : micStatus === 'PROCESSING'
+                                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                                : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                                            }`}>
+                                            🎤 {micStatus}
+                                        </span>
+
                                     </div>
                                     {conversation.isSpeaking && (
                                         <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
@@ -195,22 +197,15 @@ export function UnithChat() {
                                                     : 'bg-blue-600 hover:bg-blue-700'
                                                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                                             >
-                                                {isMicInitialized ? '🎤 Mic Active' : '🎤 Enable Microphone'}
+                                                {micStatus === 'OFF' ? 'Enable Microphone' : micStatus === 'ON' ? 'Disable Microphone' : 'Loading...'}
                                             </button>
                                             <button
-                                                onClick={() => conversation.toggleMuteStatus()}
+                                                onClick={() => conversation.toggleMute()}
                                                 className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
                                             >
                                                 {conversation.isMuted ? '🔇 Unmute' : '🔊 Mute'}
                                             </button>
-                                            {conversation.isSpeaking && (
-                                                <button
-                                                    onClick={() => conversation.stopResponse()}
-                                                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-                                                >
-                                                    ⏹ Stop Response
-                                                </button>
-                                            )}
+
                                         </div>
                                     </div>
                                 </div>
