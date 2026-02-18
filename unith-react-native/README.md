@@ -1,4 +1,4 @@
-# Unith React Native Digital Human Chat 
+# Unith React Native 
 
 A React Native app featuring AI-powered conversations with a digital human and interactive messaging.
 
@@ -48,12 +48,22 @@ In the output, you'll find options to open the app in:
 3. **Mute Audio** - Toggle mute to hear/disable AI voice responses
 4. **End Session** - Tap "End Session" to close the conversation
 
-## Architecture
+## How to implement custom speech recognition
 
-### Key Files
+1. Select a speech recognition provider (Azure, Eleven labs etc).
+2. Establish connection and forward your devices microphone output to the providers connection / service.
+3. Send valid responses to Unith by calling `conversation.sendMessage(text_response)`
 
-- **`app/(tabs)/index.tsx`** - Main chat interface and conversation logic
-- **`package.json`** - Dependencies including Unith and Expo packages
+Here's a function that handles your responses
+
+```typescript
+const handleSpeechRecognitionOutput = (text_response: string) => {
+  if (mode !== "listening") {
+    return;
+  }
+  conversation.sendMessage(text_response);
+};
+```
 
 ## Troubleshooting
 
