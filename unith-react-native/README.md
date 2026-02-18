@@ -1,50 +1,70 @@
-# Welcome to your Expo app 👋
+# Unith React Native Digital Human Chat 
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native app featuring AI-powered conversations with a digital human and interactive messaging.
 
-## Get started
+## Prerequisites
 
-1. Install dependencies
+Before running this app, you'll need to set up your credentials from [Unith](https://www.unith.ai/):
 
-   ```bash
-   npm install
-   ```
+1. **ORG_ID** - Your organization ID
+2. **HEAD_ID** - The ID of the digital human avatar to use
+3. **API_KEY** - Your Unith API key
 
-2. Start the app
+## Setup
 
-   ```bash
-   npx expo start
-   ```
+### 1. Install dependencies
 
-In the output, you'll find options to open the app in a
+```bash
+npm install
+```
+
+### 2. Configure credentials
+
+Open `app/(tabs)/index.tsx` and update the constants at the top:
+
+```typescript
+const ORG_ID = "your-org-id";
+const HEAD_ID = "your-head-id";
+const API_KEY = "your-api-key";
+```
+
+### 3. Start the app
+
+```bash
+npx expo start
+```
+
+In the output, you'll find options to open the app in:
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## How to Use
 
-## Get a fresh project
+1. **Start a Conversation** - Tap "Start Conversation" to begin a session with the digital human
+2. **Send Text Messages** - Type in the input field and tap "Send"
+3. **Mute Audio** - Toggle mute to hear/disable AI voice responses
+4. **End Session** - Tap "End Session" to close the conversation
 
-When you're ready, run:
+## Architecture
 
-```bash
-npm run reset-project
-```
+### Key Files
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- **`app/(tabs)/index.tsx`** - Main chat interface and conversation logic
+- **`package.json`** - Dependencies including Unith and Expo packages
 
-## Learn more
+## Troubleshooting
 
-To learn more about developing your project with Expo, look at the following resources:
+### Digital human not loading
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Confirm your ORG_ID and HEAD_ID are correct
+- Verify your Unith API_KEY is valid
+- Check your internet connection
 
-## Join the community
+## Support
 
-Join our community of developers creating universal apps.
+For issues or questions, please refer to:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [Unith Support](https://unith.io/support)

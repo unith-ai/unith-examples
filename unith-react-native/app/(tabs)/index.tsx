@@ -15,9 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from "react-native-webview";
 import { ConversationOptions, Mode, Status, useConversation, } from "@unith-ai/react-native";
 
-const ORG_ID = "unith";
-const HEAD_ID = "samantha-17493";
-const API_KEY = "6e9cbx92a61b475089ef4413c08626ea";
+const ORG_ID = "";
+const HEAD_ID = "";
+const API_KEY = "";
 
 type ChatMessage = {
   sender: "user" | "ai";
