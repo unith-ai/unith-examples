@@ -52,6 +52,9 @@ export function UnithChat() {
                 onSpeakingEnd: () => {
                     console.log('Digital human finished speaking');
                 },
+                onSuggestions: ({ suggestions }) => {
+                    console.log('Suggestions received:', suggestions);
+                },
                 onTimeoutWarning: () => {
                     console.log('Session will timeout soon');
                 },
@@ -93,6 +96,11 @@ export function UnithChat() {
             console.error('Failed to initialize microphone:', error);
         }
     };
+
+    const handleSuggestionClick = async (suggestion: string) => {
+        await conversationRef.current?.sendMessage(suggestion);
+    };
+
 
     return (
         <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8">
@@ -164,6 +172,22 @@ export function UnithChat() {
                                             Keep Active
                                         </button>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Suggestions */}
+                            {conversation.suggestions.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {conversation.suggestions.map((suggestion, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleSuggestionClick(suggestion)}
+                                            disabled={conversation.mode !== 'listening'}
+                                            className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-200 text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    ))}
                                 </div>
                             )}
 
