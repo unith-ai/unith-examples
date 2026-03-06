@@ -7,6 +7,7 @@ export function UnithChat() {
     const [inputText, setInputText] = useState('');
     const [micStatus, setMicStatus] = useState('OFF');
     const [isMicInitialized, setIsMicInitialized] = useState(false);
+    const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
 
     const conversation = useConversation({
         orgId: import.meta.env.VITE_ORG_ID,
@@ -26,7 +27,7 @@ export function UnithChat() {
     useEffect(() => {
         if (videoRef.current && conversationRef.current) {
             conversationRef.current.startDigitalHuman(videoRef.current, {
-                microphoneProvider: 'eleven_labs',
+                microphoneProvider: 'azure',
                 microphoneEvents: {
                     onMicrophoneError(prop) {
                         console.log(`Microphone error: ${prop.message}`);
@@ -37,6 +38,9 @@ export function UnithChat() {
                     onMicrophoneStatusChange(prop) {
                         console.log('Microphone status changed:', prop.status);
                         setMicStatus(prop.status);
+                    },
+                    onMicrophonePartialSpeechRecognitionResult() {
+                        conversationRef.current?.stopResponse();
                     },
                 },
                 onConnect: ({ userId, headInfo, }) => {
@@ -175,19 +179,33 @@ export function UnithChat() {
                                 </div>
                             )}
 
-                            {/* Suggestions */}
+                            {/* Suggestions Dropdown */}
                             {conversation.suggestions.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {conversation.suggestions.map((suggestion, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => handleSuggestionClick(suggestion)}
-                                            disabled={conversation.mode !== 'listening'}
-                                            className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-200 text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {suggestion}
-                                        </button>
-                                    ))}
+                                <div className="relative p-4 bg-slate-800/80 border-t border-slate-700">
+                                    <button
+                                        onClick={() => setIsSuggestionsOpen(prev => !prev)}
+                                        className="w-full flex items-center justify-between px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
+                                    >
+                                        <span>Suggestions ({conversation.suggestions.length})</span>
+                                        <span>{isSuggestionsOpen ? '▲' : '▼'}</span>
+                                    </button>
+                                    {isSuggestionsOpen && (
+                                        <div className="absolute bottom-full left-4 right-4 mb-1 bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden z-10">
+                                            {conversation.suggestions.map((suggestion, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => {
+                                                        handleSuggestionClick(suggestion);
+                                                        setIsSuggestionsOpen(false);
+                                                    }}
+                                                    disabled={conversation.mode !== 'listening'}
+                                                    className="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:bg-purple-500/20 hover:text-purple-200 transition-colors border-b border-slate-700 last:border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {suggestion}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -228,6 +246,13 @@ export function UnithChat() {
                                                 className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
                                             >
                                                 {conversation.isMuted ? '🔇 Unmute' : '🔊 Mute'}
+                                            </button>
+                                            <button
+                                                onClick={() => conversation.stopResponse()}
+                                                disabled={!conversation.isSpeaking}
+                                                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                Stop
                                             </button>
 
                                         </div>
