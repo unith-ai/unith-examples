@@ -1,4 +1,4 @@
-# Unith React Native 
+# Unith React Native
 
 A React Native app featuring AI-powered conversations with a digital human and interactive messaging.
 
@@ -26,6 +26,12 @@ Open `app/(tabs)/index.tsx` and update the constants at the top:
 const ORG_ID = "your-org-id";
 const HEAD_ID = "your-head-id";
 const API_KEY = "your-api-key";
+```
+
+Setup your Elevenlabs API key by creating a .env file and adding the below to it:
+
+```bash
+EXPO_PUBLIC_ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 ```
 
 ### 3. Start the app
