@@ -15,15 +15,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import {
   ConversationOptions,
-  Mode,
   Status,
   useConversation
 } from "@unith-ai/react-native";
-import { useTranscription } from "@/hooks/use-transcription";
+// import { useTranscription } from "@/hooks/use-transcription";
+import { useRealtimeTranscription } from "@/hooks/use-realtime-transcription";
+import { useConversationMode } from "@/hooks/use-conversation-mode";
 
-const ORG_ID = "";
-const HEAD_ID = "";
-const API_KEY = "";
+const ORG_ID = process.env.EXPO_PUBLIC_ORG_ID;
+const HEAD_ID = process.env.EXPO_PUBLIC_HEAD_ID;
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY;
 
 type ChatMessage = {
   sender: "user" | "ai";
@@ -37,8 +38,8 @@ type MIC_STATUS = "OFF" | "PROCESSING" | "ON";
 export default function HomeScreen() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [status, setStatus] = useState<Status>("disconnected");
-  const [mode, setMode] = useState<Mode>("listening");
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  // const [mode, setMode] = useState<Mode>("listening");
+  // const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [micStatus, setMicStatus] = useState<MIC_STATUS>("OFF");
   const [inputText, setInputText] = useState("");
@@ -47,6 +48,22 @@ export default function HomeScreen() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [timeOutWarning, setTimeOutWarning] = useState(false);
   const [timeOutBanner, setTimeOutBanner] = useState(false);
+
+  const conversationMode = useConversationMode({
+    sendMessage: text => conversation.sendMessage(text),
+    responseTimeoutMs: 30000
+  });
+  const transcription = useRealtimeTranscription({
+    onCommittedTranscript: text => {
+      conversationMode.safeSendMessage(text);
+    },
+    onPartialTranscript: text => {
+      // Can ignore or do whatever we want
+    },
+    onError: error => {
+      Alert.alert("Transcription error", error);
+    }
+  });
 
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
@@ -82,20 +99,22 @@ export default function HomeScreen() {
       setMessageCounter(prev => prev + 1);
     },
     onSuggestions: payload => setSuggestions(payload.suggestions || []),
-    onSpeakingStart: () => {
-      transcription.pauseRecording();
-      setIsSpeaking(true);
-      setMode("speaking");
+    onSpeakingStart: async () => {
+      await transcription.pauseRecording();
+      conversationMode.onSpeakingStart();
+      // setIsSpeaking(true);
+      // setMode("speaking");
       setMessages(prev =>
         prev.map((msg, index) =>
           index === prev.length - 1 ? { ...msg, visible: true } : msg
         )
       );
     },
-    onSpeakingEnd: () => {
-      setIsSpeaking(false);
-      setMode("listening");
-      transcription.resumeRecording();
+    onSpeakingEnd: async () => {
+      // setIsSpeaking(false);
+      // setMode("listening");
+      await transcription.resumeRecording();
+      conversationMode.onSpeakingEnd();
     },
     onTimeoutWarning: () => setTimeOutWarning(true),
     onTimeout: () => setTimeOutBanner(true),
@@ -106,38 +125,47 @@ export default function HomeScreen() {
       }
     },
     onMuteStatusChange: payload => setIsMuted(payload.isMuted),
-    onError: payload =>
-      Alert.alert("Unith AI error: ", payload.message || "Unknown error")
-  });
-
-  const transcription = useTranscription({
-    onAutoStop: async transcript => {
-      // Silence detected but only send when the AI is in listening mode
-      if (transcript.trim() && mode === "listening") {
-        conversation.sendMessage(transcript.trim());
-      }
-
-      // Continue listening and restart recording automatically
-      try {
-        await transcription.startRecording();
-      } catch {
-        setMicStatus("OFF");
-      }
+    onError: payload => {
+      conversationMode.onError();
+      Alert.alert("Unith AI error: ", payload.message || "Unknown error");
     }
   });
 
+  // const transcription = useTranscription({
+  //   onAutoStop: async transcript => {
+  //     // Silence detected but only send when the AI is in listening mode
+  //     if (transcript.trim() && mode === "listening") {
+  //       conversation.sendMessage(transcript.trim());
+  //     }
+
+  //     // Continue listening and restart recording automatically
+  //     try {
+  //       await transcription.startRecording();
+  //     } catch {
+  //       setMicStatus("OFF");
+  //     }
+  //   }
+  // });
+
   const handleSend = () => {
     if (!inputText.trim()) return;
-    conversation.sendMessage(inputText.trim());
+    conversationMode.safeSendMessage(inputText.trim());
+    // conversation.sendMessage(inputText.trim());
     setInputText("");
   };
 
-  const handleStartSession = () => {
+  const handleStartSession = async () => {
     // clear messages from previous session
     setMessages([]);
     setMessageCounter(0);
     conversation.startSession();
     setSessionStarted(true);
+
+    try {
+      await transcription.initializeMicrophone();
+    } catch (error) {
+      console.log("ERROR initializing microphone", error);
+    }
   };
 
   const handleEndSession = () => {
@@ -158,7 +186,7 @@ export default function HomeScreen() {
       }
     } else if (micStatus === "ON") {
       // Disable mic and stop without transcribing the remaining audio
-      await transcription.cancelRecording();
+      await transcription.stopRecording();
       setMicStatus("OFF");
     }
   };
@@ -172,7 +200,8 @@ export default function HomeScreen() {
   };
 
   const handleSuggestion = (text: string) => {
-    conversation.sendMessage(text);
+    conversationMode.safeSendMessage(text.trim());
+    // conversation.sendMessage(text);
   };
 
   return (
@@ -219,7 +248,7 @@ export default function HomeScreen() {
                   <Text style={styles.pillText}>{status}</Text>
                 </View>
                 <View style={[styles.pill, styles.pillPurple]}>
-                  <Text style={styles.pillText}>{mode}</Text>
+                  <Text style={styles.pillText}>{conversationMode.mode}</Text>
                 </View>
                 <View
                   style={[
@@ -234,12 +263,14 @@ export default function HomeScreen() {
                   <Text style={styles.pillText}>Mic: {micStatus}</Text>
                 </View>
               </View>
-              {isSpeaking && (
+              {sessionStarted && (
                 <View
                   style={[styles.pill, styles.pillGreen, styles.speakingPill]}
                 >
                   <View style={styles.pulseDot} />
-                  <Text style={styles.pillText}>Speaking...</Text>
+                  <Text style={styles.pillText}>
+                    {conversationMode.statusMessage}
+                  </Text>
                 </View>
               )}
             </View>
@@ -279,7 +310,7 @@ export default function HomeScreen() {
                     key={`${s}-${i}`}
                     style={styles.suggestionPill}
                     onPress={() => handleSuggestion(s)}
-                    disabled={mode !== "listening"}
+                    disabled={conversationMode.mode !== "listening"}
                   >
                     <Text style={styles.suggestionText}>{s}</Text>
                   </TouchableOpacity>
@@ -296,14 +327,14 @@ export default function HomeScreen() {
                     placeholder="Type your message..."
                     placeholderTextColor="#7a8394"
                     style={styles.input}
-                    editable={mode === "listening"}
+                    editable={conversationMode.mode === "listening"}
                     onSubmitEditing={handleSend}
                     returnKeyType="send"
                   />
                   <TouchableOpacity
                     style={styles.sendButton}
                     onPress={handleSend}
-                    disabled={mode !== "listening"}
+                    disabled={conversationMode.mode !== "listening"}
                   >
                     <Text style={styles.sendButtonText}>Send</Text>
                   </TouchableOpacity>
@@ -312,7 +343,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     style={styles.secondaryButton}
                     onPress={handleToggleMic}
-                    disabled={mode !== "listening"}
+                    disabled={conversationMode.mode !== "listening"}
                   >
                     <Text style={styles.secondaryButtonText}>
                       {micStatus === "OFF"

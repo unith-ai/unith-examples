@@ -85,7 +85,7 @@ export function useTranscription(
   const {
     modelId = "scribe_v2",
     silenceThreshold = -45,
-    silenceDurationMs = 2000,
+    silenceDurationMs = 200,
     onAutoStop
   } = options;
 
@@ -156,6 +156,10 @@ export function useTranscription(
       throw err;
     }
   }, [recorder, modelId]);
+
+  useEffect(() => {
+    console.log(recorderState.isRecording, "RECORDING");
+  }, [recorderState]);
 
   const cancelRecording = useCallback(async (): Promise<void> => {
     if (!isRecordingRef.current) return;
@@ -262,6 +266,7 @@ async function transcribe(
     }
 
     const json = await resp.json();
+    console.log("Transcription response:", json);
     return json.text ?? json.transcript ?? "";
   } catch (error) {
     console.log("Transcription error:", error);
