@@ -1,4 +1,4 @@
-# Unith React Native 
+# Unith React Native
 
 A React Native app featuring AI-powered conversations with a digital human and interactive messaging.
 
@@ -20,7 +20,7 @@ npm install
 
 ### 2. Configure credentials
 
-Open `app/(tabs)/index.tsx` and update the constants at the top:
+Open `app/(tabs)/index.tsx` and update the constants at the top or add them to your .env file:
 
 ```typescript
 const ORG_ID = "your-org-id";
@@ -28,10 +28,30 @@ const HEAD_ID = "your-head-id";
 const API_KEY = "your-api-key";
 ```
 
-### 3. Start the app
+```bash
+EXPO_PUBLIC_ORG_ID=your_org_id_here
+EXPO_PUBLIC_HEAD_ID=your_head_id_here
+EXPO_PUBLIC_API_KEY=your_api_key_here
+```
+
+Setup your Elevenlabs API key by adding it to the .env file as well.
 
 ```bash
-npx expo start
+EXPO_PUBLIC_ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+```
+
+### 3. Prebuild the app
+
+This app uses native modules from the library (`@siteed/expo-audio-studio`) — Expo Go is not supported.
+
+```bash
+npx expo prebuild
+```
+
+### 4. Start the app
+
+```bash
+npx expo run:ios    # or npx expo run:android
 ```
 
 In the output, you'll find options to open the app in:
