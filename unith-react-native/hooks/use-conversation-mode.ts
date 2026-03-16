@@ -9,7 +9,7 @@ interface UseConversationModeOptions {
 
 const STATUS_MESSAGES: Record<Mode, string> = {
   listening: "Listening...",
-  thinking: "Processing...",
+  thinking: "Thinking...",
   speaking: "Speaking...",
   stopping: "Stopping..."
 };
@@ -18,6 +18,7 @@ export function useConversationMode(options: UseConversationModeOptions) {
   const { sendMessage, responseTimeoutMs = 30000 } = options;
   const [mode, setMode] = useState<Mode>("listening");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageRef = useRef<string>("");
 
   const canRecord: boolean = useMemo(() => mode === "listening", [mode]);
   const statusMessage = STATUS_MESSAGES[mode];
@@ -36,12 +37,22 @@ export function useConversationMode(options: UseConversationModeOptions) {
       Alert.alert(
         "Response timed out",
         "The assistant took too long to respond. Please try again.",
-        [{ text: "Ok" }]
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Retry",
+            onPress: () => {
+              setMode("thinking");
+              sendMessage(lastMessageRef.current);
+              startResponseTimeout();
+            }
+          }
+        ]
       );
 
       setMode("listening");
     }, responseTimeoutMs);
-  }, [responseTimeoutMs, clearResponseTimeout]);
+  }, [responseTimeoutMs, clearResponseTimeout, sendMessage]);
 
   const safeSendMessage = useCallback(
     (text: string) => {
@@ -63,6 +74,7 @@ export function useConversationMode(options: UseConversationModeOptions) {
         return;
       }
 
+      lastMessageRef.current = text;
       setMode("thinking");
       sendMessage(text);
       startResponseTimeout();

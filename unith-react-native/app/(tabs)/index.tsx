@@ -18,7 +18,6 @@ import {
   Status,
   useConversation
 } from "@unith-ai/react-native";
-// import { useTranscription } from "@/hooks/use-transcription";
 import { useRealtimeTranscription } from "@/hooks/use-realtime-transcription";
 import { useConversationMode } from "@/hooks/use-conversation-mode";
 
@@ -38,8 +37,6 @@ type MIC_STATUS = "OFF" | "PROCESSING" | "ON";
 export default function HomeScreen() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [status, setStatus] = useState<Status>("disconnected");
-  // const [mode, setMode] = useState<Mode>("listening");
-  // const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [micStatus, setMicStatus] = useState<MIC_STATUS>("OFF");
   const [inputText, setInputText] = useState("");
@@ -102,8 +99,6 @@ export default function HomeScreen() {
     onSpeakingStart: async () => {
       await transcription.pauseRecording();
       conversationMode.onSpeakingStart();
-      // setIsSpeaking(true);
-      // setMode("speaking");
       setMessages(prev =>
         prev.map((msg, index) =>
           index === prev.length - 1 ? { ...msg, visible: true } : msg
@@ -111,8 +106,6 @@ export default function HomeScreen() {
       );
     },
     onSpeakingEnd: async () => {
-      // setIsSpeaking(false);
-      // setMode("listening");
       await transcription.resumeRecording();
       conversationMode.onSpeakingEnd();
     },
@@ -130,22 +123,6 @@ export default function HomeScreen() {
       Alert.alert("Unith AI error: ", payload.message || "Unknown error");
     }
   });
-
-  // const transcription = useTranscription({
-  //   onAutoStop: async transcript => {
-  //     // Silence detected but only send when the AI is in listening mode
-  //     if (transcript.trim() && mode === "listening") {
-  //       conversation.sendMessage(transcript.trim());
-  //     }
-
-  //     // Continue listening and restart recording automatically
-  //     try {
-  //       await transcription.startRecording();
-  //     } catch {
-  //       setMicStatus("OFF");
-  //     }
-  //   }
-  // });
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -168,9 +145,11 @@ export default function HomeScreen() {
     }
   };
 
-  const handleEndSession = () => {
+  const handleEndSession = async () => {
+    await transcription.stopRecording();
     conversation.endSession();
     setSessionStarted(false);
+    setMicStatus("OFF");
   };
 
   const handleToggleMic = async () => {

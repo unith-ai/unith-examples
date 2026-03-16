@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import {
   useAudioRecorder,
   type RecordingConfig
@@ -17,10 +17,31 @@ export function useRealtimeTranscription(
   options: UseRealtimeTranscriptionOptions
 ) {
   const [status, setStatus] = useState<TranscriptionStatus>("idle");
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const recorder = useAudioRecorder();
-  const elevenlabsWS = useElevenlabsWebSocket(options);
+  const elevenlabsWS = useElevenlabsWebSocket({
+    onCommittedTranscript: text => {
+      // Clear inactivity timer — user spoke successfully
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+        inactivityTimeoutRef.current = null;
+      }
+      options.onCommittedTranscript(text);
+    },
+    onPartialTranscript: text => {
+      // Also clear on partial — speech is being detected
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+        inactivityTimeoutRef.current = null;
+      }
+      options.onPartialTranscript(text);
+    },
+    onError: options.onError
+  });
+
   const { sendAudio, connect, connectionStatus, disconnect } = elevenlabsWS;
+  const { onError } = options;
 
   const getRecordingConfig = useCallback((): RecordingConfig => {
     return {
@@ -58,13 +79,20 @@ export function useRealtimeTranscription(
     try {
       // Step 1: Request permissions and prepare recorder
       await recorder.prepareRecording(getRecordingConfig());
+    } catch (error) {
+      setStatus("idle");
+      console.error("Initialize microphone error: ", error);
+      throw new Error(
+        "Microphone unavailable. Please grant microphone permission in Settings."
+      );
+    }
 
+    try {
       // Step 2: Establish Elevenlabs WebSocket connection
       await connect();
     } catch (error) {
-      throw new Error("Failed to initialize microphone: " + error);
-    } finally {
       setStatus("idle");
+      throw new Error("Failed to connect to transcription service: " + error);
     }
   }, [recorder, getRecordingConfig, connect]);
 
@@ -82,15 +110,24 @@ export function useRealtimeTranscription(
       await recorder.startRecording(getRecordingConfig());
 
       setStatus("recording");
+
+      inactivityTimeoutRef.current = setTimeout(() => {
+        onError?.("No speech detected for 10 seconds. Please try again.");
+      }, 10000);
     } catch (error) {
       setStatus("idle");
       throw new Error("Failed to start recording: " + error);
     }
-  }, [recorder, getRecordingConfig, connect, connectionStatus]);
+  }, [recorder, getRecordingConfig, connect, connectionStatus, onError]);
 
   const stopRecording = useCallback(async () => {
     // Step 0: Check if we're actually recording or paused
     if (!recorder.isRecording && !recorder.isPaused) return;
+
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = null;
+    }
 
     try {
       // Step 1: Stop recording
@@ -108,6 +145,11 @@ export function useRealtimeTranscription(
   const pauseRecording = useCallback(async () => {
     // Step 0: Check if we're currently recording
     if (!recorder.isRecording) return;
+
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = null;
+    }
 
     try {
       // Step 1: Pause recording

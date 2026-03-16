@@ -170,7 +170,7 @@ export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
         const message: ElevenlabsWSSendMessage = {
           message_type: "input_audio_chunk",
           audio_base_64: "", // Send an empty chunk to signal end of stream
-          commit: true,
+          commit: true, // we flush the remaining audio before closing
           sample_rate: 16000
         };
         wsRef.current.send(JSON.stringify(message));
@@ -191,11 +191,18 @@ export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
       return;
     }
 
+    // Fulfills requirement #2 of websocket
+    // Backpressure: skip chunk if send buffer exceeds 64KB
+    if (wsRef.current.bufferedAmount > 65536) {
+      console.warn("WebSocket buffer full, dropping audio chunk");
+      return;
+    }
+
     const message: ElevenlabsWSSendMessage = {
       message_type: "input_audio_chunk",
       audio_base_64: base64AudioData,
       sample_rate: 16000,
-      commit: false // TODO: check
+      commit: false // let vad auto-decide
     };
 
     wsRef.current.send(JSON.stringify(message));
