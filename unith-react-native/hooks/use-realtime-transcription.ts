@@ -1,4 +1,5 @@
 import { useCallback, useState, useRef } from "react";
+import { PermissionsAndroid, Platform } from "react-native";
 import {
   useAudioRecorder,
   type RecordingConfig
@@ -75,6 +76,26 @@ export function useRealtimeTranscription(
 
   const initializeMicrophone = useCallback(async () => {
     setStatus("initializing");
+
+    // On Android, explicitly request RECORD_AUDIO runtime permission
+    if (Platform.OS === "android") {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        {
+          title: "Microphone Permission",
+          message:
+            "This app needs access to your microphone for speech recognition.",
+          buttonPositive: "Grant",
+          buttonNegative: "Deny"
+        }
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        setStatus("idle");
+        throw new Error(
+          "Microphone permission denied. Please grant it in Settings."
+        );
+      }
+    }
 
     try {
       // Step 1: Request permissions and prepare recorder
