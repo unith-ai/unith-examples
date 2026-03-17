@@ -19,6 +19,7 @@ export function useRealtimeTranscription(
 ) {
   const [status, setStatus] = useState<TranscriptionStatus>("idle");
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMutedRef = useRef<boolean>(false);
 
   const recorder = useAudioRecorder();
   const elevenlabsWS = useElevenlabsWebSocket({
@@ -52,6 +53,10 @@ export function useRealtimeTranscription(
       interval: 100,
       output: { primary: { enabled: false } },
       onAudioStream: async event => {
+        // We drop the audio if the AI is speaking
+        // A second safe check parameter
+        if (isMutedRef.current) return;
+
         // event.data is base64 string on native
         if (typeof event.data === "string") {
           sendAudio(event.data);
@@ -131,6 +136,7 @@ export function useRealtimeTranscription(
       await recorder.startRecording(getRecordingConfig());
 
       setStatus("recording");
+      isMutedRef.current = false;
 
       inactivityTimeoutRef.current = setTimeout(() => {
         onError?.("No speech detected for 10 seconds. Please try again.");
@@ -144,6 +150,8 @@ export function useRealtimeTranscription(
   const stopRecording = useCallback(async () => {
     // Step 0: Check if we're actually recording or paused
     if (!recorder.isRecording && !recorder.isPaused) return;
+
+    isMutedRef.current = false;
 
     if (inactivityTimeoutRef.current) {
       clearTimeout(inactivityTimeoutRef.current);
@@ -166,6 +174,9 @@ export function useRealtimeTranscription(
   const pauseRecording = useCallback(async () => {
     // Step 0: Check if we're currently recording
     if (!recorder.isRecording) return;
+
+    // Mute immediately and drop audio chunks because recorder.pauseRecording finishing takes time
+    isMutedRef.current = true;
 
     if (inactivityTimeoutRef.current) {
       clearTimeout(inactivityTimeoutRef.current);
@@ -192,6 +203,9 @@ export function useRealtimeTranscription(
     try {
       // Step 1: Resume recording
       await recorder.resumeRecording();
+
+      // Unmute after recorder is ready and hence there would be no chunks leaked
+      isMutedRef.current = false;
 
       // Step 2: Resume Elevenlabs WebSocket stream
       // TODO : do we need this?

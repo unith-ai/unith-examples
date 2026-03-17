@@ -100,63 +100,73 @@ export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
 
     const ws = new WebSocket(URL);
 
-    ws.onopen = () => {
-      setConnectionStatus("connected");
-      backoffRef.current = 1000; // Reset backoff on successful connection
-      isFirstChunkRef.current = true; // Reset for new connection
-    };
+    return new Promise<void>((resolve, reject) => {
+      ws.onopen = () => {
+        setConnectionStatus("connected");
+        backoffRef.current = 1000; // Reset backoff on successful connection
+        isFirstChunkRef.current = true; // Reset for new connection
+        resolve();
+      };
 
-    ws.onmessage = event => {
-      try {
-        const message: ElevenlabsWSReceiveMessage = JSON.parse(event.data);
+      ws.onmessage = event => {
+        try {
+          const message: ElevenlabsWSReceiveMessage = JSON.parse(event.data);
 
-        switch (message.message_type) {
-          case "session_started":
-            // Connection established, ready to send audio
-            break;
-          case "partial_transcript":
-            if (message.text) {
-              options.onPartialTranscript(message.text.trim());
-            }
-            break;
-          case "committed_transcript":
-            if (message.text.trim()) {
-              options.onCommittedTranscript(message.text.trim());
-            }
-            break;
-          case "committed_transcript_with_timestamps":
-            // Received committed transcript along with timestamps and words array
-            break;
-          default:
-            console.log("Received message", message);
-            if (message.error) {
-              options.onError?.(message.error);
-            }
+          switch (message.message_type) {
+            case "session_started":
+              // Connection established, ready to send audio
+              break;
+            case "partial_transcript":
+              if (message.text) {
+                options.onPartialTranscript(message.text.trim());
+              }
+              break;
+            case "committed_transcript":
+              if (message.text.trim()) {
+                options.onCommittedTranscript(message.text.trim());
+              }
+              break;
+            case "committed_transcript_with_timestamps":
+              // Received committed transcript along with timestamps and words array
+              break;
+            default:
+              console.log("Received message", message);
+              if (message.error) {
+                options.onError?.(message.error);
+              }
+          }
+        } catch (error) {
+          console.log("Error while parsing JSON data", error);
         }
-      } catch (error) {
-        console.log("Error while parsing JSON data", error);
-      }
-    };
+      };
 
-    ws.onerror = event => {
-      setConnectionStatus("error");
-    };
+      ws.onerror = event => {
+        setConnectionStatus("error");
+        reject(new Error("Websocket connection refused."));
+      };
 
-    ws.onclose = event => {
-      setConnectionStatus("disconnected");
+      ws.onclose = event => {
+        setConnectionStatus("disconnected");
 
-      wsRef.current = null;
+        wsRef.current = null;
 
-      if (intentionalCloseRef.current) return;
+        if (intentionalCloseRef.current) return;
 
-      // Reconnection with exponential backoff
-      reconnectTimeoutRef.current = setTimeout(() => {
-        backoffRef.current = Math.min(backoffRef.current * 2, MAX_BACKOFF);
-        connect();
-      }, backoffRef.current);
-    };
+        // Reconnection with exponential backoff
+        reconnectTimeoutRef.current = setTimeout(async () => {
+          backoffRef.current = Math.min(backoffRef.current * 2, MAX_BACKOFF);
 
-    wsRef.current = ws;
+          try {
+            await connect();
+          } catch (error) {
+            console.error("Websocket reconnection failed: ", error);
+            // Reconnection failed — onclose will fire again and retry with backoff
+          }
+        }, backoffRef.current);
+      };
+
+      wsRef.current = ws;
+    });
   }, [fetchSingleUseToken, options]);
 
   const disconnect = useCallback(() => {
@@ -175,9 +185,9 @@ export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
         };
         wsRef.current.send(JSON.stringify(message));
       } finally {
+        intentionalCloseRef.current = true;
         wsRef.current.close(1000, "Client disconnecting");
         wsRef.current = null;
-        intentionalCloseRef.current = true;
       }
     }
 
