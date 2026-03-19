@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type Mode } from "@unith-ai/react-native";
-import { Alert } from "react-native";
 
 interface UseConversationModeOptions {
   sendMessage: (text: string) => void;
@@ -34,42 +33,43 @@ export function useConversationMode(options: UseConversationModeOptions) {
     clearResponseTimeout();
 
     timeoutRef.current = setTimeout(() => {
-      Alert.alert(
-        "Response timed out",
-        "The assistant took too long to respond. Please try again.",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Retry",
-            onPress: () => {
-              setMode("thinking");
-              sendMessage(lastMessageRef.current);
-              startResponseTimeout();
-            }
-          }
-        ]
+      console.error(
+        "Response timed out. The assistant took too long to respond. Please try again."
       );
+
+      // We might want to use this for the retry functionality.
+      // Alert.alert(
+      //   "Response timed out",
+      //   "The assistant took too long to respond. Please try again.",
+      //   [
+      //     { text: "Cancel", style: "cancel" },
+      //     {
+      //       text: "Retry",
+      //       onPress: () => {
+      //         setMode("thinking");
+      //         sendMessage(lastMessageRef.current);
+      //         startResponseTimeout();
+      //       }
+      //     }
+      //   ]
+      // );
 
       setMode("listening");
     }, responseTimeoutMs);
-  }, [responseTimeoutMs, clearResponseTimeout, sendMessage]);
+  }, [responseTimeoutMs, clearResponseTimeout]);
 
   const safeSendMessage = useCallback(
     (text: string) => {
       if (mode !== "listening") {
-        Alert.alert(
-          "Cannot send message",
-          "Please wait for the assistant to finish responding before sending another message.",
-          [{ text: "Ok" }]
+        console.warn(
+          "Cannot send message. Please wait for the assistant to finish responding before sending another message."
         );
         return;
       }
 
       if (!text.trim()) {
-        Alert.alert(
-          "Cannot send empty message",
-          "Please enter a message before sending.",
-          [{ text: "Ok" }]
+        console.warn(
+          "Cannot send empty message. Please enter a message before sending."
         );
         return;
       }

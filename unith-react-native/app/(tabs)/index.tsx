@@ -160,7 +160,7 @@ export default function HomeScreen() {
         await transcription.startRecording();
         setMicStatus("ON");
       } catch (err: any) {
-        Alert.alert("Microphone Error", err.message);
+        console.error("Microphone Error", err.message);
         setMicStatus("OFF");
       }
     } else if (micStatus === "ON") {
