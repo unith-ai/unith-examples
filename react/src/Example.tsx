@@ -34,6 +34,9 @@ export function UnithChat() {
                     onMicrophoneSpeechRecognitionResult(prop) {
                         conversationRef.current?.sendMessage(prop.transcript);
                     },
+                    onMicrophonePartialSpeechRecognitionResult() {
+                        conversationRef.current?.stopResponse();
+                    },
                     onMicrophoneStatusChange(prop) {
                         console.log('Microphone status changed:', prop.status);
                         setMicStatus(prop.status);
