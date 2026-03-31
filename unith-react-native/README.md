@@ -33,13 +33,7 @@ EXPO_PUBLIC_ORG_ID=your_org_id_here
 EXPO_PUBLIC_HEAD_ID=your_head_id_here
 EXPO_PUBLIC_API_KEY=your_api_key_here
 ```
-
-Setup your Elevenlabs API key by adding it to the .env file as well.
-
-```bash
-EXPO_PUBLIC_ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
-```
-
+ 
 ### 3. Prebuild the app
 
 This app uses native modules from the library (`@siteed/expo-audio-studio`) — Expo Go is not supported.

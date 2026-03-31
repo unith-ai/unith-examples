@@ -46,13 +46,14 @@ export default function HomeScreen() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [timeOutWarning, setTimeOutWarning] = useState(false);
   const [timeOutBanner, setTimeOutBanner] = useState(false);
+  const [speechRecognitionToken, setSpeechRecognitionToken] = useState<string | null>(null);
 
   const conversationMode = useConversationMode({
     sendMessage: text => conversation.sendMessage(text),
     responseTimeoutMs: 30000
   });
 
-  const transcription = useRealtimeTranscription({
+  const transcription = useRealtimeTranscription(speechRecognitionToken, {
     onCommittedTranscript: text => {
       conversationMode.safeSendMessage(text);
 
@@ -84,6 +85,7 @@ export default function HomeScreen() {
       setStatus("connected");
     },
     onStoppingEnd: () => { },
+    onStoppingStart: () => { },
     onDisconnect: () => {
       setStatus("disconnected");
       setSessionStarted(false);
@@ -124,7 +126,13 @@ export default function HomeScreen() {
     onError: payload => {
       conversationMode.onError();
       Alert.alert("Unith AI error: ", payload.message || "Unknown error");
-    }
+    },
+    onSpeechRecognitionToken: token => {
+      setSpeechRecognitionToken(token);
+    },
+    onHighDemand: () => {
+      Alert.alert("High demand", "The system is currently experiencing high demand. Please try again later.");
+    },
   });
 
   const handleSend = () => {
@@ -155,6 +163,10 @@ export default function HomeScreen() {
   };
 
   const handleToggleMic = async () => {
+    if (!speechRecognitionToken) {
+      Alert.alert("Please wait", "Speech recognition is still initializing.");
+      return;
+    }
     if (micToggleLockRef.current) return;
     micToggleLockRef.current = true;
     try {
@@ -294,7 +306,7 @@ export default function HomeScreen() {
                     key={`${s}-${i}`}
                     style={styles.suggestionPill}
                     onPress={() => handleSuggestion(s)}
-                    disabled={conversationMode.mode !== "listening"}
+                    disabled={conversationMode.mode !== "listening" || !speechRecognitionToken}
                   >
                     <Text style={styles.suggestionText}>{s}</Text>
                   </TouchableOpacity>
@@ -318,7 +330,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     style={styles.sendButton}
                     onPress={handleSend}
-                    disabled={conversationMode.mode !== "listening"}
+                    disabled={conversationMode.mode !== "listening" || !speechRecognitionToken}
                   >
                     <Text style={styles.sendButtonText}>Send</Text>
                   </TouchableOpacity>
@@ -327,7 +339,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     style={styles.secondaryButton}
                     onPress={handleToggleMic}
-                    disabled={conversationMode.mode !== "listening"}
+                    disabled={conversationMode.mode !== "listening" || !speechRecognitionToken}
                   >
                     <Text style={styles.secondaryButtonText}>
                       {micStatus === "OFF"

@@ -15,6 +15,7 @@ interface UseRealtimeTranscriptionOptions {
 }
 
 export function useRealtimeTranscription(
+  token: string | null,
   options: UseRealtimeTranscriptionOptions,
 ) {
   const [status, setStatus] = useState<TranscriptionStatus>("idle");
@@ -22,7 +23,7 @@ export function useRealtimeTranscription(
   const isMutedRef = useRef<boolean>(false);
 
   const recorder = useAudioRecorder();
-  const elevenlabsWS = useElevenlabsWebSocket({
+  const elevenlabsWS = useElevenlabsWebSocket(token, {
     onCommittedTranscript: (text: string) => {
       // Clear inactivity timer — user spoke successfully
       if (inactivityTimeoutRef.current) {
@@ -80,6 +81,7 @@ export function useRealtimeTranscription(
   }, [sendAudio]);
 
   const initializeMicrophone = useCallback(async () => {
+    if (!token) return;
     setStatus("initializing");
 
     // On Android, explicitly request RECORD_AUDIO runtime permission
@@ -120,9 +122,10 @@ export function useRealtimeTranscription(
       setStatus("idle");
       throw new Error("Failed to connect to transcription service: " + error);
     }
-  }, [recorder, getRecordingConfig, connect]);
+  }, [recorder, getRecordingConfig, connect, token]);
 
   const startRecording = useCallback(async () => {
+    if (!token) return;
     // Step 0: Check if we're already recording
     if (recorder.isRecording) return;
 
@@ -145,7 +148,7 @@ export function useRealtimeTranscription(
       setStatus("idle");
       throw new Error("Failed to start recording: " + error);
     }
-  }, [recorder, getRecordingConfig, connect, connectionStatus, onError]);
+  }, [recorder, getRecordingConfig, connect, connectionStatus, onError, token]);
 
   const stopRecording = useCallback(async () => {
     // Step 0: Check if we're actually recording or paused

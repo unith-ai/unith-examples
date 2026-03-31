@@ -43,7 +43,10 @@ type ElevenlabsWSReceiveMessage = WebSocketMessage;
 const ELEVENLABS_WS_URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime";
 const MAX_BACKOFF = 60000; // 1 minute
 
-export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
+export function useElevenlabsWebSocket(
+  token: string | null,
+  options: UseElevenlabsWebSocketOptions,
+) {
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("disconnected");
 
@@ -56,29 +59,8 @@ export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
   const isFirstChunkRef = useRef<boolean>(true);
   const intentionalCloseRef = useRef<boolean>(false);
 
-  const fetchSingleUseToken = useCallback(async (): Promise<string> => {
-    const response = await fetch(
-      "https://api.elevenlabs.io/v1/single-use-token/realtime_scribe",
-      {
-        method: "POST",
-        headers: {
-          "xi-api-key": process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? "",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.detail?.message || `Failed to get token: ${response.status}`,
-      );
-    }
-
-    const data = await response.json();
-    return data.token;
-  }, []);
-
   const connect = useCallback(async () => {
+    if (!token) return;
     intentionalCloseRef.current = false;
 
     // Clean up existing connection if any
@@ -88,8 +70,6 @@ export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
     }
 
     setConnectionStatus("connecting");
-
-    const token = await fetchSingleUseToken();
 
     const params = new URLSearchParams({
       token: token,
@@ -176,7 +156,7 @@ export function useElevenlabsWebSocket(options: UseElevenlabsWebSocketOptions) {
 
       wsRef.current = ws;
     });
-  }, [fetchSingleUseToken]);
+  }, [token]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
