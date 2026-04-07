@@ -135,6 +135,11 @@ export default function HomeScreen() {
     },
   });
 
+  // Use this to generate a new speech recognition token if needed (e.g. if the current one expires)
+  const generateNewSRToken = () => {
+    conversation.generateSpeechRecognitionToken();
+  }
+
   const handleSend = () => {
     if (!inputText.trim()) return;
     conversationMode.safeSendMessage(inputText.trim());
