@@ -6,6 +6,14 @@ import {
 } from "@siteed/expo-audio-studio";
 import { useElevenlabsWebSocket } from "./use-elevenlabs-ws";
 
+// 100ms of 16 kHz, 16-bit mono PCM silence (16000 * 0.1 * 2 = 3200 zero bytes)
+// Sent on a heartbeat interval while paused to keep the ElevenLabs WS session alive.
+const SILENT_CHUNK_BASE64 = (() => {
+  let binary = "";
+  for (let i = 0; i < 3200; i++) binary += "\0";
+  return btoa(binary);
+})();
+
 type TranscriptionStatus = "idle" | "initializing" | "recording" | "paused";
 
 interface UseRealtimeTranscriptionOptions {
@@ -21,6 +29,7 @@ export function useRealtimeTranscription(
   const [status, setStatus] = useState<TranscriptionStatus>("idle");
   const inactivityTimeoutRef = useRef<number | null>(null);
   const isMutedRef = useRef<boolean>(false);
+  const silenceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const recorder = useAudioRecorder();
   const elevenlabsWS = useElevenlabsWebSocket(token, {
@@ -161,6 +170,11 @@ export function useRealtimeTranscription(
       inactivityTimeoutRef.current = null;
     }
 
+    if (silenceIntervalRef.current !== null) {
+      clearInterval(silenceIntervalRef.current);
+      silenceIntervalRef.current = null;
+    }
+
     try {
       // Step 1: Stop recording
       await recorder.stopRecording();
@@ -194,14 +208,24 @@ export function useRealtimeTranscription(
       // TODO : do we need this?
 
       setStatus("paused");
+
+      // Keep the WebSocket session alive by sending silent PCM chunks every 2s
+      silenceIntervalRef.current = setInterval(() => {
+        sendAudio(SILENT_CHUNK_BASE64);
+      }, 2000);
     } catch (error) {
       throw new Error("Failed to pause recording: " + error);
     }
-  }, [recorder]);
+  }, [recorder, sendAudio]);
 
   const resumeRecording = useCallback(async () => {
     // Step 0: Check if we're currently paused
     if (!recorder.isPaused) return;
+
+    if (silenceIntervalRef.current !== null) {
+      clearInterval(silenceIntervalRef.current);
+      silenceIntervalRef.current = null;
+    }
 
     try {
       // Step 1: Resume recording
