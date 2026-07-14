@@ -1,81 +1,69 @@
-import { useConversation, } from '@unith-ai/react';
 import { useRef, useEffect, useState } from 'react';
+import {
+    useSession,
+    useConnectionStatus,
+    useTurn,
+    useIsSessionStarted,
+    useMessages,
+    useSuggestions,
+    useIsMuted,
+    useMicrophoneAlwaysOn,
+    useOnTimeout,
+} from '@unith-ai/react-components';
+import type { SessionConfig } from '@unith-ai/core-client';
+
+// Session configuration. Credentials come from the .env file (see README).
+const config: SessionConfig = {
+    orgId: import.meta.env.VITE_ORG_ID,
+    headId: import.meta.env.VITE_HEAD_ID,
+    apiKey: import.meta.env.VITE_API_KEY,
+    language: 'en-US',
+    username: 'React User',
+    allowWakeLock: true,
+    microphone: {
+        provider: 'eleven_labs',
+        mode: 'always-on',
+        // The user speaking automatically interrupts the avatar.
+        voiceInterruptions: true,
+    },
+};
 
 export function UnithChat() {
-    const videoRef = useRef(null);
-    const conversationRef = useRef<ReturnType<typeof useConversation> | null>(null);
-    const [inputText, setInputText] = useState('');
-    const [micStatus, setMicStatus] = useState('OFF');
-    const [isMicInitialized, setIsMicInitialized] = useState(false);
+    const videoRef = useRef<HTMLDivElement>(null);
 
-    const conversation = useConversation({
-        orgId: import.meta.env.VITE_ORG_ID,
-        headId: import.meta.env.VITE_HEAD_ID,
-        apiKey: import.meta.env.VITE_API_KEY,
-        language: 'en-US',
-        mode: 'default',
-        username: 'React User',
-        allowWakeLock: true,
+    // Session lifecycle + state, all from react-components hooks.
+    const { connect, session } = useSession();
+    const status = useConnectionStatus();
+    const turn = useTurn();
+    const sessionStarted = useIsSessionStarted();
+    const { messages, sendMessage } = useMessages();
+    const { suggestions, selectSuggestion } = useSuggestions();
+    const { isMuted, toggleMuted } = useIsMuted();
+    // Always-on mic: transcripts are recognised and sent automatically.
+    const { startRecording, stopRecording, status: micStatus } =
+        useMicrophoneAlwaysOn();
+
+    const [inputText, setInputText] = useState('');
+    const [timeoutWarning, setTimeoutWarning] = useState(false);
+
+    // Connect once the video container is mounted. The avatar renders into it.
+    useEffect(() => {
+        if (videoRef.current) connect(videoRef.current, config);
+    }, [connect]);
+
+    // Surface inactivity timeout warnings.
+    useOnTimeout((t) => {
+        setTimeoutWarning(t.active && t.kind === 'warning');
     });
 
-    useEffect(() => {
-        conversationRef.current = conversation;
-    }, [conversation]);
+    const isConnected = status.status === 'connected';
+    const isSpeaking = turn.state === 'ai-speaking';
+    // A new message is only accepted while the conversation is idle.
+    const canInteract = turn.state === 'idle';
 
-
-    useEffect(() => {
-        if (videoRef.current && conversationRef.current) {
-            conversationRef.current.startDigitalHuman(videoRef.current, {
-                microphoneProvider: 'eleven_labs',
-                microphoneEvents: {
-                    onMicrophoneError(prop) {
-                        console.log(`Microphone error: ${prop.message}`);
-                    },
-                    onMicrophoneSpeechRecognitionResult(prop) {
-                        conversationRef.current?.sendMessage(prop.transcript);
-                    },
-                    onMicrophonePartialSpeechRecognitionResult() {
-                        conversationRef.current?.stopResponse();
-                    },
-                    onMicrophoneStatusChange(prop) {
-                        console.log('Microphone status changed:', prop.status);
-                        setMicStatus(prop.status);
-                    },
-                },
-                onConnect: ({ userId, headInfo, }) => {
-                    console.log('Connected with user ID:', userId);
-                    console.log('Digital human:', headInfo.name);
-                },
-                onMessage: ({ sender, text, }) => {
-                    console.log(`[${sender}] ${text}`);
-                },
-                onSpeakingStart: () => {
-                    console.log('Digital human started speaking');
-                },
-                onSpeakingEnd: () => {
-                    console.log('Digital human finished speaking');
-                },
-                onSuggestions: ({ suggestions }) => {
-                    console.log('Suggestions received:', suggestions);
-                },
-                onTimeoutWarning: () => {
-                    console.log('Session will timeout soon');
-                },
-                onTimeout: () => {
-                    console.log('Session timed out');
-                },
-                onError: ({ message, type }) => {
-                    if (type === 'toast') {
-                        alert(message);
-                    }
-                },
-            });
-        }
-    }, []);
-
-    const handleSendMessage = async () => {
+    const handleSendMessage = () => {
         if (inputText.trim()) {
-            await conversationRef.current?.sendMessage(inputText);
+            sendMessage(inputText);
             setInputText('');
         }
     };
@@ -87,23 +75,18 @@ export function UnithChat() {
         }
     };
 
-    const handleKeepSession = () => {
-        conversationRef.current?.keepSession();
+    const handleToggleMicrophone = () => {
+        if (micStatus === 'off') startRecording();
+        else stopRecording();
     };
 
-    const handleToggleMicrophone = async () => {
-        try {
-            await conversationRef.current?.toggleMicrophone();
-            setIsMicInitialized(true);
-        } catch (error) {
-            console.error('Failed to initialize microphone:', error);
-        }
-    };
-
-    const handleSuggestionClick = async (suggestion: string) => {
-        await conversationRef.current?.sendMessage(suggestion);
-    };
-
+    // Map the microphone status to a friendly label.
+    const micLabel =
+        micStatus === 'recording'
+            ? 'ON'
+            : micStatus === 'processing'
+                ? 'PROCESSING'
+                : 'OFF';
 
     return (
         <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8">
@@ -129,22 +112,22 @@ export function UnithChat() {
                                 <div className="flex flex-wrap gap-3 items-center justify-between">
                                     <div className="flex gap-3">
                                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                                            {conversation.status}
+                                            {status.status}
                                         </span>
                                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                            {conversation.mode}
+                                            {turn.state}
                                         </span>
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${micStatus === 'ON'
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${micLabel === 'ON'
                                             ? 'bg-green-500/20 text-green-300 border-green-500/30'
-                                            : micStatus === 'PROCESSING'
+                                            : micLabel === 'PROCESSING'
                                                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                                                 : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
                                             }`}>
-                                            🎤 {micStatus}
+                                            🎤 {micLabel}
                                         </span>
 
                                     </div>
-                                    {conversation.isSpeaking && (
+                                    {isSpeaking && (
                                         <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
                                             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                                             Speaking...
@@ -153,10 +136,10 @@ export function UnithChat() {
                                 </div>
                             </div>
 
-                            {conversation.isConnected && !conversation.sessionStarted && (
+                            {isConnected && !sessionStarted && (
                                 <div className="p-4 bg-slate-800/80 border-t border-slate-700">
                                     <button
-                                        onClick={() => conversation.startSession()}
+                                        onClick={() => session?.startSession()}
                                         className="w-full py-3 px-6 bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
                                     >
                                         Start Conversation
@@ -164,12 +147,12 @@ export function UnithChat() {
                                 </div>
                             )}
 
-                            {conversation.timeOutWarning && (
+                            {timeoutWarning && (
                                 <div className="p-4 bg-amber-500/10 border-t border-amber-500/30">
                                     <div className="flex items-center justify-between">
                                         <p className="text-amber-300 text-sm">⚠️ Your session will timeout soon</p>
                                         <button
-                                            onClick={handleKeepSession}
+                                            onClick={() => session?.keepSession()}
                                             className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
                                         >
                                             Keep Active
@@ -179,22 +162,22 @@ export function UnithChat() {
                             )}
 
                             {/* Suggestions */}
-                            {conversation.suggestions.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {conversation.suggestions.map((suggestion, index) => (
+                            {suggestions.length > 0 && (
+                                <div className="flex flex-wrap gap-2 p-4">
+                                    {suggestions.map((s) => (
                                         <button
-                                            key={index}
-                                            onClick={() => handleSuggestionClick(suggestion)}
-                                            disabled={conversation.mode !== 'listening'}
+                                            key={s.id}
+                                            onClick={() => selectSuggestion(s.id)}
+                                            disabled={!canInteract}
                                             className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-200 text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {suggestion}
+                                            {s.suggestion}
                                         </button>
                                     ))}
                                 </div>
                             )}
 
-                            {conversation.sessionStarted && (
+                            {sessionStarted && (
                                 <div className="p-4 bg-slate-800/80 border-t border-slate-700">
                                     <div className="space-y-3">
                                         <div className="flex gap-2">
@@ -203,13 +186,13 @@ export function UnithChat() {
                                                 value={inputText}
                                                 onChange={(e) => setInputText(e.target.value)}
                                                 onKeyPress={handleKeyPress}
-                                                disabled={conversation.mode !== 'listening'}
+                                                disabled={!canInteract}
                                                 placeholder="Type your message..."
                                                 className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
                                             <button
                                                 onClick={handleSendMessage}
-                                                disabled={conversation.mode !== 'listening'}
+                                                disabled={!canInteract}
                                                 className="px-6 py-3 bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded-xl transition-all duration-200 disabled:cursor-not-allowed"
                                             >
                                                 Send
@@ -218,19 +201,19 @@ export function UnithChat() {
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={handleToggleMicrophone}
-                                                disabled={conversation.mode === 'speaking'}
-                                                className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${isMicInitialized
+                                                disabled={isSpeaking}
+                                                className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${micStatus !== 'off'
                                                     ? 'bg-green-600 hover:bg-green-700'
                                                     : 'bg-blue-600 hover:bg-blue-700'
                                                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                                             >
-                                                {micStatus === 'OFF' ? 'Enable Microphone' : micStatus === 'ON' ? 'Disable Microphone' : 'Loading...'}
+                                                {micLabel === 'OFF' ? 'Enable Microphone' : micLabel === 'ON' ? 'Disable Microphone' : 'Loading...'}
                                             </button>
                                             <button
-                                                onClick={() => conversation.toggleMute()}
+                                                onClick={() => toggleMuted()}
                                                 className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
                                             >
-                                                {conversation.isMuted ? '🔇 Unmute' : '🔊 Mute'}
+                                                {isMuted ? '🔇 Unmute' : '🔊 Mute'}
                                             </button>
 
                                         </div>
@@ -246,27 +229,27 @@ export function UnithChat() {
                                 <h3 className="text-lg font-semibold text-white flex items-center justify-between">
                                     <span>Messages</span>
                                     <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full">
-                                        {conversation.messageCounter}
+                                        {messages.length}
                                     </span>
                                 </h3>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-150">
-                                {conversation.messages.length === 0 ? (
+                                {messages.length === 0 ? (
                                     <p className="text-slate-400 text-sm text-center py-8">No messages yet</p>
                                 ) : (
-                                    conversation.messages.map((msg, index) => (
+                                    messages.map((msg) => (
                                         msg.visible && (
                                             <div
-                                                key={index}
-                                                className={`p-3 rounded-lg ${msg.sender === 'user'
+                                                key={msg.id}
+                                                className={`p-3 rounded-lg ${msg.role === 'user'
                                                     ? 'bg-blue-500/20 border border-blue-500/30 ml-4'
                                                     : 'bg-slate-700/50 border border-slate-600 mr-4'
                                                     }`}
                                             >
                                                 <div className="flex items-center justify-between mb-1">
-                                                    <strong className={`text-sm font-semibold ${msg.sender === 'user' ? 'text-blue-300' : 'text-purple-300'
+                                                    <strong className={`text-sm font-semibold ${msg.role === 'user' ? 'text-blue-300' : 'text-purple-300'
                                                         }`}>
-                                                        {msg.sender === 'user' ? 'You' : 'Assistant'}
+                                                        {msg.role === 'user' ? 'You' : 'Assistant'}
                                                     </strong>
                                                     <small className="text-xs text-slate-400">
                                                         {msg.timestamp.toLocaleTimeString()}
