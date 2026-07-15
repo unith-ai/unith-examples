@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unith Digital Human — TypeScript</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Digital Human Chat</h1>
+        <span id="status" class="status">idle</span>
+      </header>
+
+      <main>
+        <!-- Left: the streaming avatar -->
+        <section class="stage">
+          <div id="avatar"></div>
+          <p id="caption" class="caption"></p>
+          <div class="badges">
+            <span id="turn-badge" class="badge">turn: idle</span>
+            <span id="mic-badge" class="badge">mic: off</span>
+          </div>
+          <button id="start" class="primary" hidden>Start conversation</button>
+          <div id="timeout" class="timeout" hidden>
+            <span>⚠️ Your session will time out soon.</span>
+            <button id="keep">Keep active</button>
+          </div>
+        </section>
+
+        <!-- Right: transcript + controls -->
+        <aside class="panel">
+          <div id="suggestions" class="suggestions"></div>
+          <ul id="messages" class="messages"></ul>
+
+          <div id="composer" class="composer" hidden>
+            <input id="input" type="text" placeholder="Type a message…" autocomplete="off" />
+            <button id="send">Send</button>
+          </div>
+
+          <div id="controls" class="controls" hidden>
+            <button id="mic">Start recording</button>
+            <button id="play-recording" disabled>Play recording</button>
+            <button id="send-recording" disabled>Send recording</button>
+            <button id="delete-recording" disabled>Delete recording</button>
+            <button id="mute">Mute</button>
+            <button id="captions">Captions: off</button>
+            <button id="stop" disabled>Stop response</button>
+            <button id="end">End</button>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
