@@ -11,7 +11,7 @@ const config: SessionConfig = {
   allowWakeLock: true,
   microphone: {
     provider: "eleven_labs",
-    mode: "always-on",
+    mode: "manual",
     voiceInterruptions: true,
   },
 };
@@ -37,6 +37,9 @@ const input = $<HTMLInputElement>("input");
 const sendBtn = $<HTMLButtonElement>("send");
 const controls = $("controls");
 const micBtn = $<HTMLButtonElement>("mic");
+const playRecordingBtn = $<HTMLButtonElement>("play-recording");
+const sendRecordingBtn = $<HTMLButtonElement>("send-recording");
+const deleteRecordingBtn = $<HTMLButtonElement>("delete-recording");
 const muteBtn = $<HTMLButtonElement>("mute");
 const captionsBtn = $<HTMLButtonElement>("captions");
 const stopBtn = $<HTMLButtonElement>("stop");
@@ -73,6 +76,17 @@ async function main() {
   });
 
  
+  const updateRecordingControls = (status: string) => {
+    const isRecording = status === "recording";
+    const hasRecording = status === "recorded";
+    const idle = session.turn.value.state === "idle";
+
+    micBtn.textContent = isRecording ? "Stop recording" : "Start recording";
+    playRecordingBtn.disabled = !hasRecording;
+    sendRecordingBtn.disabled = !hasRecording || !idle;
+    deleteRecordingBtn.disabled = !hasRecording;
+  };
+
   // turn state 
   session.turn.subscribe((turn) => {
     turnBadge.textContent = `turn: ${turn.state}`;
@@ -80,7 +94,8 @@ async function main() {
     const idle = turn.state === "idle";
     input.disabled = !idle;
     sendBtn.disabled = !idle;
-    stopBtn.hidden = turn.state !== "ai-speaking";
+    stopBtn.disabled = turn.state !== "ai-speaking";
+    updateRecordingControls(session.recording.value.status);
   });
 
   // message transcript (only visible messages are shown)
@@ -116,7 +131,11 @@ async function main() {
   // mic status
   session.microphone.subscribe((mic) => {
     micBadge.textContent = `mic: ${mic.status}`;
-    micBtn.textContent = mic.status === "off" ? "Enable mic" : "Disable mic";
+  });
+
+  // manual recording status
+  session.recording.subscribe((recording) => {
+    updateRecordingControls(recording.status);
   });
 
 
@@ -158,7 +177,16 @@ async function main() {
     if (e.key === "Enter") send();
   });
 
-  micBtn.onclick = () => session.toggleMicrophone();
+  micBtn.onclick = async () => {
+    if (session.recording.value.status === "recording") {
+      await session.stopRecording();
+    } else {
+      await session.startRecording();
+    }
+  };
+  playRecordingBtn.onclick = () => session.playRecording();
+  sendRecordingBtn.onclick = () => session.sendRecording();
+  deleteRecordingBtn.onclick = () => session.deleteRecording();
   muteBtn.onclick = () => session.toggleMute();
   captionsBtn.onclick = () => session.toggleCaptions();
   stopBtn.onclick = () => session.stopResponse();

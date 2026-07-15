@@ -2,7 +2,7 @@
 
 A framework-free **Vite + TypeScript** app that embeds a **Unith digital human** using [`@unith-ai/core-client`](https://www.npmjs.com/package/@unith-ai/core-client) directly — just the SDK and plain DOM.
 
-It demonstrates the full conversation flow: the streaming avatar, live turn state, a text transcript, always-on microphone, mute, captions, follow-up suggestions, interruption, and inactivity-timeout handling — all driven by subscribing to the SDK's observables.
+It demonstrates the full conversation flow: the streaming avatar, live turn state, a text transcript, manual microphone control, mute, captions, follow-up suggestions, interruption, and inactivity-timeout handling — all driven by subscribing to the SDK's observables.
 
 ## How it works
 
@@ -55,6 +55,6 @@ Open the app, click **Start conversation** (audio needs a user gesture to begin)
 ## Notes
 
 - The avatar renders into a plain `<div id="avatar">` — it must have a width and height (the SDK sizes the video stream to that element; see [`src/style.css`](src/style.css)).
-- This example uses the **ElevenLabs** speech-to-text provider in **always-on** mode with voice interruptions. Change the `microphone` config in [`src/main.ts`](src/main.ts) for a different provider or manual mode. (For the `azure` provider, also `npm install microsoft-cognitiveservices-speech-sdk`.)
+- This example uses the **ElevenLabs** speech-to-text provider in **manual** mode with voice interruptions. Change the `microphone` config in [`src/main.ts`](src/main.ts) for a different provider or mode. (For the `azure` provider, also `npm install microsoft-cognitiveservices-speech-sdk`.)
 - Using React instead? See the [`../react`](../react) example, which wraps this SDK in hooks via `@unith-ai/react-components`.
 - Full API reference: the [`@unith-ai/core-client` docs](https://www.npmjs.com/package/@unith-ai/core-client).
