@@ -876,26 +876,19 @@
     "@typescript-eslint/types" "8.56.0"
     eslint-visitor-keys "^5.0.0"
 
-"@unith-ai/core-client@3.0.0-beta.2":
-  version "3.0.0-beta.2"
-  resolved "https://registry.npmjs.org/@unith-ai/core-client/-/core-client-3.0.0-beta.2.tgz"
-  integrity sha512-1JHpWYicAfmSiygRv8YCJ+5Br4HmcUgMo7iX3LRIbyMRSHzE5S/YpX5dG/7ybx5ahbKg4NO/vDCCF/XmdcyZTg==
+"@unith-ai/core-client@3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@unith-ai/core-client/-/core-client-3.0.0.tgz#460f3f1737e26e8977dbecf6395301b0ce2b328e"
+  integrity sha512-w3VhUCiEypOoPck2afHyrpIkF62H7+Q9KEsFtmJtKsr70tKOV6429eK4RHRfVa4hxpaRvy4yJFLoIeyh7xlEng==
   dependencies:
     "@elevenlabs/client" "^0.13.0"
 
-"@unith-ai/core-client@3.0.0-beta.3":
-  version "3.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@unith-ai/core-client/-/core-client-3.0.0-beta.3.tgz#f10fe9b28da2f544577f156b7007f7757aa04f09"
-  integrity sha512-d/lb3NxD6lOvH5xeB68qy6Dbi37DqnOK75QNkOPf73nqYxXZin2TNZtMIgK4j6Erg2xEIp28iAhJFw3Shupkjw==
+"@unith-ai/react-components@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@unith-ai/react-components/-/react-components-3.0.0.tgz#ed507c693a1cec7f4ad0503b667138083441191c"
+  integrity sha512-J8Frh/6Oqr3MZFt7W8sY/MU/XsHxffnO3/KZK4EYnHhSpk1DbNmjBbLqiBUxInGkanj35dX5GnuCQnwdJ1BboQ==
   dependencies:
-    "@elevenlabs/client" "^0.13.0"
-
-"@unith-ai/react-components@^0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@unith-ai/react-components/-/react-components-0.0.5.tgz#0439dc3e25f89646bda34a55a5a66fe64f8f3848"
-  integrity sha512-giKRUjBLBUgC+l960jdvScfU3yvJ85DtvMEaJWoO9HS+ohZ0bScYlWDwhUeNytHDR/40Phok/Fql48zOIDSsgQ==
-  dependencies:
-    "@unith-ai/core-client" "3.0.0-beta.3"
+    "@unith-ai/core-client" "3.0.0"
 
 "@vitejs/plugin-react@^5.1.1":
   version "5.1.4"

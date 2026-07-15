@@ -292,10 +292,10 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.9.tgz#cf3f0e876d7bee15a93ab925b82bf570a3904a24"
   integrity sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==
 
-"@unith-ai/core-client@3.0.0-beta.3":
-  version "3.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@unith-ai/core-client/-/core-client-3.0.0-beta.3.tgz#f10fe9b28da2f544577f156b7007f7757aa04f09"
-  integrity sha512-d/lb3NxD6lOvH5xeB68qy6Dbi37DqnOK75QNkOPf73nqYxXZin2TNZtMIgK4j6Erg2xEIp28iAhJFw3Shupkjw==
+"@unith-ai/core-client@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@unith-ai/core-client/-/core-client-3.0.0.tgz#460f3f1737e26e8977dbecf6395301b0ce2b328e"
+  integrity sha512-w3VhUCiEypOoPck2afHyrpIkF62H7+Q9KEsFtmJtKsr70tKOV6429eK4RHRfVa4hxpaRvy4yJFLoIeyh7xlEng==
   dependencies:
     "@elevenlabs/client" "^0.13.0"
 

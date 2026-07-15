@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@unith-ai/core-client": "3.0.0-beta.3"
+    "@unith-ai/core-client": "^3.0.0"
   },
   "devDependencies": {
     "typescript": "~5.9.3",
