@@ -883,12 +883,19 @@
   dependencies:
     "@elevenlabs/client" "^0.13.0"
 
-"@unith-ai/react-components@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@unith-ai/react-components/-/react-components-0.0.3.tgz#b83c9d3379f853ffb177aad0dd049529e40169c2"
-  integrity sha512-/Qq+SlLE/tN1a4MqfdEkylxOyXg7qjw22mRh/eIZpyjhl9G5Ax2dkoY9ST1haD+PGsC5KQaIh6RrR/MQZ08e4g==
+"@unith-ai/core-client@3.0.0-beta.3":
+  version "3.0.0-beta.3"
+  resolved "https://registry.yarnpkg.com/@unith-ai/core-client/-/core-client-3.0.0-beta.3.tgz#f10fe9b28da2f544577f156b7007f7757aa04f09"
+  integrity sha512-d/lb3NxD6lOvH5xeB68qy6Dbi37DqnOK75QNkOPf73nqYxXZin2TNZtMIgK4j6Erg2xEIp28iAhJFw3Shupkjw==
   dependencies:
-    "@unith-ai/core-client" "3.0.0-beta.2"
+    "@elevenlabs/client" "^0.13.0"
+
+"@unith-ai/react-components@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@unith-ai/react-components/-/react-components-0.0.4.tgz#af441854bfd75233bf065ded8794209249857941"
+  integrity sha512-+9d2V3SguO5+pfPlEt/MSNM6CUkvyQXYuJiFF+F3CcaDvwOXODvSF8izUfjuKtTVZtSxEIOPokS5tpYoEMBTJQ==
+  dependencies:
+    "@unith-ai/core-client" "3.0.0-beta.3"
 
 "@vitejs/plugin-react@^5.1.1":
   version "5.1.4"

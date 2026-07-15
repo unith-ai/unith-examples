@@ -23,7 +23,6 @@ const config: SessionConfig = {
     microphone: {
         provider: 'eleven_labs',
         mode: 'always-on',
-        // The user speaking automatically interrupts the avatar.
         voiceInterruptions: true,
     },
 };
@@ -50,6 +49,10 @@ export function UnithChat() {
     useEffect(() => {
         if (videoRef.current) connect(videoRef.current, config);
     }, [connect]);
+
+    useEffect(() => {
+        console.log('Messages updated:', messages);
+    }, [messages]);
 
     // Surface inactivity timeout warnings.
     useOnTimeout((t) => {
