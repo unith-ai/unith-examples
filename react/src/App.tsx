@@ -1,11 +1,12 @@
-
 import './App.css'
+import { SessionProvider } from '@unith-ai/react-components'
 import { UnithChat } from './Example'
 
 function App() {
-
   return (
-    <UnithChat />
+    <SessionProvider>
+      <UnithChat />
+    </SessionProvider>
   )
 }
 
