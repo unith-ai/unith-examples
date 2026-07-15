@@ -890,10 +890,10 @@
   dependencies:
     "@elevenlabs/client" "^0.13.0"
 
-"@unith-ai/react-components@^0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@unith-ai/react-components/-/react-components-0.0.4.tgz#af441854bfd75233bf065ded8794209249857941"
-  integrity sha512-+9d2V3SguO5+pfPlEt/MSNM6CUkvyQXYuJiFF+F3CcaDvwOXODvSF8izUfjuKtTVZtSxEIOPokS5tpYoEMBTJQ==
+"@unith-ai/react-components@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@unith-ai/react-components/-/react-components-0.0.5.tgz#0439dc3e25f89646bda34a55a5a66fe64f8f3848"
+  integrity sha512-giKRUjBLBUgC+l960jdvScfU3yvJ85DtvMEaJWoO9HS+ohZ0bScYlWDwhUeNytHDR/40Phok/Fql48zOIDSsgQ==
   dependencies:
     "@unith-ai/core-client" "3.0.0-beta.3"
 
